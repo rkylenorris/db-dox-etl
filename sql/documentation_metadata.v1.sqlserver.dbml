@@ -388,3 +388,15 @@ Ref: doc.extended_property.database_id > core.database_info.database_id
 Ref: doc.extended_property.schema_id   > core.schema_info.schema_id
 Ref: doc.extended_property.object_id   > core.object_info.object_id
 Ref: doc.extended_property.column_id   > relational.column_info.column_id
+
+
+////////////////////////////////////////////////////////
+// Schema: meta (process data; e.g. etl_steps)
+////////////////////////////////////////////////////////
+
+Table meta.etl_step {
+  etl_step_id int [pk, increment]
+  code text [not null] // EtlStep enum values
+  phase text [not null] // extract, parse, load
+  description text 
+}
