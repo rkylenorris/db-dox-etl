@@ -63,7 +63,7 @@ Table core.database_info {
   owner_name        varchar(256)
   created_at        datetime
   last_backup_at    datetime
-  default_filegroup varchar(128)
+  default_file_group varchar(128)
   containment_desc  varchar(64)
   is_primary        bool          [default: false]
 
@@ -112,7 +112,7 @@ Table relational.table_info {
   is_system_versioned  bool          [default: false]
   history_table_id     int                      // fk to relational.table_info
   is_external          bool
-  filegroup_name       varchar(128)
+  file_group_name       varchar(128)
   is_partitioned       bool
   partition_scheme     varchar(128)
   partition_function   varchar(128)
@@ -141,7 +141,7 @@ Table relational.column_info {
   collation_name    varchar(256)
   is_sparse         bool          [default: false]
   is_hidden         bool          [default: false]
-  is_rowguidcol     bool          [default: false]
+  is_row_guide_column     bool          [default: false]
 
   note: 'One row per column in a table.'
 }
@@ -207,15 +207,15 @@ Table relational.index_info {
   index_id          int           [pk, increment]
   table_id          int           [not null]
   index_name        varchar(256)  [not null]
-  index_type        varchar(64)   // CLUSTERED / NONCLUSTERED / COLUMNSTORE / FULLTEXT / OTHER
+  index_type        varchar(64)   // CLUSTERED / NONCLUSTERED / column_store / full_text / OTHER
   is_primary_key    bool          [default: false]
   is_unique         bool          [default: false]
   is_filtered       bool          [default: false]
   filter_definition text
   is_clustered      bool
-  is_columnstore    bool
-  is_fulltext       bool
-  filegroup_name    varchar(128)
+  is_column_store    bool
+  is_full_text       bool
+  file_group_name    varchar(128)
   fill_factor       int
   compression_desc  varchar(64)
 
@@ -249,7 +249,7 @@ Ref: relational.index_included_column.index_id  > relational.index_info.index_id
 Ref: relational.index_included_column.column_id > relational.column_info.column_id
 
 ////////////////////////////////////////////////////////
-// Schema: code (views, procs, functions, triggers, types, sequences, synonyms, deps)
+// Schema: code (views, procedures, functions, triggers, types, sequences, synonyms, deps)
 ////////////////////////////////////////////////////////
 
 Table code.view_info {
