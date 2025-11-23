@@ -1,0 +1,390 @@
+Project db_dox {
+  database_type: "SQLServer"
+}
+
+////////////////////////////////////////////////////////
+// Enums
+////////////////////////////////////////////////////////
+
+Enum object_type {
+  DATABASE
+  SCHEMA
+  TABLE
+  VIEW
+  PROCEDURE
+  FUNCTION
+  SEQUENCE
+  SYNONYM
+  TYPE
+  TRIGGER
+}
+
+Enum constraint_type {
+  PRIMARY_KEY
+  UNIQUE
+  FOREIGN_KEY
+  CHECK
+  DEFAULT
+}
+
+Enum trigger_scope {
+  TABLE
+  DATABASE
+}
+
+Enum function_type {
+  SCALAR
+  INLINE_TVF
+  MULTI_TVF
+}
+
+Enum principal_type {
+  USER
+  ROLE
+  APPLICATION_ROLE
+}
+
+Enum permission_state {
+  GRANT
+  DENY
+  REVOKE
+}
+
+////////////////////////////////////////////////////////
+// Schema: core (database, schema, generic objects)
+////////////////////////////////////////////////////////
+
+Table core.database_info {
+  database_id       int           [pk, increment]
+  name              varchar(256)  [not null]
+  collation_name    varchar(256)
+  compatibility_lvl int
+  recovery_model    varchar(64)
+  owner_name        varchar(256)
+  created_at        datetime
+  last_backup_at    datetime
+  default_filegroup varchar(128)
+  containment_desc  varchar(64)
+  is_primary        bool          [default: false]
+
+  note: 'One row per source database being documented.'
+}
+
+Table core.schema_info {
+  schema_id   int           [pk, increment]
+  database_id int           [not null]
+  name        varchar(256)  [not null]
+  owner_name  varchar(256)
+
+  note: 'Logical schema within a database.'
+}
+
+Ref: core.schema_info.database_id > core.database_info.database_id
+
+Table core.object_info {
+  object_id     int           [pk, increment]
+  database_id   int           [not null]
+  schema_id     int                      // nullable for db-level objects
+  object_name   varchar(256)  [not null]
+  object_type   object_type   [not null]
+  definition    text
+  created_at    datetime
+  modified_at   datetime
+  is_system     bool          [default: false]
+  is_ms_shipped bool          [default: false]
+  is_enabled    bool          [default: true]  // for triggers etc.
+
+  note: 'Generic metadata for any object: table, view, proc, function, sequence, synonym, type, trigger...'
+}
+
+Ref: core.object_info.database_id > core.database_info.database_id
+Ref: core.object_info.schema_id   > core.schema_info.schema_id
+
+////////////////////////////////////////////////////////
+// Schema: relational (tables, columns, constraints, indexes)
+////////////////////////////////////////////////////////
+
+Table relational.table_info {
+  table_id             int           [pk, increment]
+  object_id            int           [not null, unique]
+  table_type           varchar(64)   // Fact / Dimension / Junction / Reference / Other
+  row_count            bigint
+  is_system_versioned  bool          [default: false]
+  history_table_id     int                      // fk to relational.table_info
+  is_external          bool
+  filegroup_name       varchar(128)
+  is_partitioned       bool
+  partition_scheme     varchar(128)
+  partition_function   varchar(128)
+
+  note: 'One row per user or system table.'
+}
+
+Ref: relational.table_info.object_id        > core.object_info.object_id
+Ref: relational.table_info.history_table_id > relational.table_info.table_id
+
+Table relational.column_info {
+  column_id         int           [pk, increment]
+  table_id          int           [not null]
+  column_name       varchar(256)  [not null]
+  ordinal_position  int           [not null]
+  data_type         varchar(128)  [not null]
+  max_length        int
+  precision         int
+  scale             int
+  is_nullable       bool          [not null]
+  default_definition  text
+  computed_definition text
+  is_identity       bool          [default: false]
+  identity_seed     bigint
+  identity_increment bigint
+  collation_name    varchar(256)
+  is_sparse         bool          [default: false]
+  is_hidden         bool          [default: false]
+  is_rowguidcol     bool          [default: false]
+
+  note: 'One row per column in a table.'
+}
+
+Ref: relational.column_info.table_id > relational.table_info.table_id
+
+Table relational.constraint_info {
+  constraint_id   int             [pk, increment]
+  table_id        int             [not null]
+  constraint_name varchar(256)    [not null]
+  constraint_type constraint_type [not null]
+  definition      text
+  is_disabled     bool            [default: false]
+  is_not_trusted  bool
+
+  note: 'Primary keys, unique, check, default, FK are all modeled here.'
+}
+
+Ref: relational.constraint_info.table_id > relational.table_info.table_id
+
+Table relational.constraint_column {
+  constraint_column_id int  [pk, increment]
+  constraint_id        int  [not null]
+  column_id            int  [not null]
+  ordinal_position     int  [not null]
+
+  note: 'One row per (constraint, column) pair; preserves composite key order.'
+}
+
+Ref: relational.constraint_column.constraint_id > relational.constraint_info.constraint_id
+Ref: relational.constraint_column.column_id    > relational.column_info.column_id
+
+Table relational.foreign_key {
+  foreign_key_id      int           [pk, increment]
+  constraint_id       int           [not null, unique]
+  referenced_table_id int           [not null]
+  on_update_action    varchar(32)   // NO ACTION / CASCADE / SET NULL / SET DEFAULT
+  on_delete_action    varchar(32)
+  is_disabled         bool          [default: false]
+  is_not_trusted      bool
+
+  note: 'Extends constraint_info where constraint_type = FOREIGN_KEY.'
+}
+
+Ref: relational.foreign_key.constraint_id       > relational.constraint_info.constraint_id
+Ref: relational.foreign_key.referenced_table_id > relational.table_info.table_id
+
+Table relational.foreign_key_column {
+  foreign_key_column_id int  [pk, increment]
+  foreign_key_id        int  [not null]
+  column_id             int  [not null]   // source column
+  referenced_column_id  int  [not null]   // target column
+  ordinal_position      int  [not null]
+
+  note: 'Column-level mapping for composite foreign keys.'
+}
+
+Ref: relational.foreign_key_column.foreign_key_id       > relational.foreign_key.foreign_key_id
+Ref: relational.foreign_key_column.column_id            > relational.column_info.column_id
+Ref: relational.foreign_key_column.referenced_column_id > relational.column_info.column_id
+
+Table relational.index_info {
+  index_id          int           [pk, increment]
+  table_id          int           [not null]
+  index_name        varchar(256)  [not null]
+  index_type        varchar(64)   // CLUSTERED / NONCLUSTERED / COLUMNSTORE / FULLTEXT / OTHER
+  is_primary_key    bool          [default: false]
+  is_unique         bool          [default: false]
+  is_filtered       bool          [default: false]
+  filter_definition text
+  is_clustered      bool
+  is_columnstore    bool
+  is_fulltext       bool
+  filegroup_name    varchar(128)
+  fill_factor       int
+  compression_desc  varchar(64)
+
+  note: 'One row per index on a table.'
+}
+
+Ref: relational.index_info.table_id > relational.table_info.table_id
+
+Table relational.index_column {
+  index_column_id int  [pk, increment]
+  index_id        int  [not null]
+  column_id       int  [not null]
+  key_ordinal     int  [not null]
+  is_descending   bool [default: false]
+
+  note: 'Ordered key columns for an index.'
+}
+
+Ref: relational.index_column.index_id  > relational.index_info.index_id
+Ref: relational.index_column.column_id > relational.column_info.column_id
+
+Table relational.index_included_column {
+  included_column_id int [pk, increment]
+  index_id           int [not null]
+  column_id          int [not null]
+
+  note: 'Included (non-key) columns of an index.'
+}
+
+Ref: relational.index_included_column.index_id  > relational.index_info.index_id
+Ref: relational.index_included_column.column_id > relational.column_info.column_id
+
+////////////////////////////////////////////////////////
+// Schema: code (views, procs, functions, triggers, types, sequences, synonyms, deps)
+////////////////////////////////////////////////////////
+
+Table code.view_info {
+  view_id           int          [pk, increment]
+  object_id         int          [not null, unique]
+  is_indexed        bool         [default: false]
+  is_schema_bound   bool
+  with_check_option bool
+
+  note: 'One row per view; core identity comes from object_info.'
+}
+
+Ref: code.view_info.object_id > core.object_info.object_id
+
+Table code.view_column {
+  view_column_id    int          [pk, increment]
+  view_id           int          [not null]
+  column_name       varchar(256) [not null]
+  ordinal_position  int          [not null]
+  data_type         varchar(128)
+  source_expression text
+  source_column_id  int                    // optional link to base column
+
+  note: 'Logical projection of columns in a view (from parser or system metadata).'
+}
+
+Ref: code.view_column.view_id          > code.view_info.view_id
+Ref: code.view_column.source_column_id > relational.column_info.column_id
+
+Table code.procedure_info {
+  procedure_id   int          [pk, increment]
+  object_id      int          [not null, unique]
+  is_encrypted   bool
+  execute_as     varchar(256) // EXECUTE AS string
+  has_result_set bool         // best-effort flag
+
+  note: 'One row per stored procedure.'
+}
+
+Ref: code.procedure_info.object_id > core.object_info.object_id
+
+Table code.procedure_parameter {
+  proc_parameter_id int          [pk, increment]
+  procedure_id      int          [not null]
+  parameter_name    varchar(256) [not null]
+  data_type         varchar(128) [not null]
+  max_length        int
+  precision         int
+  scale             int
+  parameter_mode    varchar(16)  // IN / OUT / INOUT
+  ordinal_position  int          [not null]
+  has_default_value bool         [default: false]
+  default_value     text
+
+  note: 'One row per parameter to a stored procedure.'
+}
+
+Ref: code.procedure_parameter.procedure_id > code.procedure_info.procedure_id
+
+Table code.procedure_result_column {
+  proc_result_column_id int          [pk, increment]
+  procedure_id          int          [not null]
+  column_name           varchar(256) [not null]
+  ordinal_position      int          [not null]
+  data_type             varchar(128)
+  source_object_id      int                    // view/table/function, if known
+
+  note: 'Optional: inferred result-set schema per proc (from sqlglot).'
+}
+
+Ref: code.procedure_result_column.procedure_id     > code.procedure_info.procedure_id
+Ref: code.procedure_result_column.source_object_id > core.object_info.object_id
+
+Table code.function_info {
+  function_id       int           [pk, increment]
+  object_id         int           [not null, unique]
+  function_type     function_type [not null]  // SCALAR / INLINE_TVF / MULTI_TVF
+  return_data_type  varchar(128)             // for scalar
+  is_schema_bound   bool
+  is_deterministic  bool
+
+  note: 'One row per function; TVF result schema handled separately.'
+}
+
+Ref: code.function_info.object_id > core.object_info.object_id
+
+Table code.function_parameter {
+  func_parameter_id int          [pk, increment]
+  function_id       int          [not null]
+  parameter_name    varchar(256) [not null]
+  data_type         varchar(128) [not null]
+  max_length        int
+  precision         int
+  scale             int
+  parameter_mode    varchar(16)  // IN / OUT / INOUT (if supported)
+  ordinal_position  int          [not null]
+  has_default_value bool         [default: false]
+  default_value     text
+}
+
+Ref: code.function_parameter.function_id > code.function_info.function_id
+
+Table code.function_result_column {
+  func_result_column_id int          [pk, increment]
+  function_id           int          [not null]
+  column_name           varchar(256) [not null]
+  ordinal_position      int          [not null]
+  data_type             varchar(128)
+  source_object_id      int                    // underlying table/view, if resolved
+
+  note: 'Result-set schema for TVFs.'
+}
+
+Ref: code.function_result_column.function_id      > code.function_info.function_id
+Ref: code.function_result_column.source_object_id > core.object_info.object_id
+
+
+////////////////////////////////////////////////////////
+// Schema: doc (extended properties & human docs)
+////////////////////////////////////////////////////////
+
+Table doc.extended_property {
+  extended_property_id int          [pk, increment]
+  database_id          int
+  schema_id            int
+  object_id            int
+  column_id            int
+  level_type           varchar(32)  // DATABASE / SCHEMA / OBJECT / COLUMN
+  property_name        varchar(256) [not null]
+  property_value       text
+
+  note: 'Supports both engine extended properties and your own: business name, definition, SME, sensitivity, notes.'
+}
+
+Ref: doc.extended_property.database_id > core.database_info.database_id
+Ref: doc.extended_property.schema_id   > core.schema_info.schema_id
+Ref: doc.extended_property.object_id   > core.object_info.object_id
+Ref: doc.extended_property.column_id   > relational.column_info.column_id
