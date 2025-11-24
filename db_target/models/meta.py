@@ -95,6 +95,25 @@ class ETLStep(Base):
 
 
 class ETLRunAudit(Base):
+    """
+    ETL Run Audit model representing an audit record for each ETL run.
+    Attributes:
+        etl_run_id (int): Primary key identifier for the ETL run.
+        etl_run_guid (str): Unique GUID for the ETL run.
+        job_name (str): Name of the ETL job.
+        environment (str): Environment in which the ETL is run.
+        trigger_type (str): Type of trigger for the ETL run.
+        triggered_by (str | None): Identifier of who or what triggered the run.
+        start_time (datetime): Start time of the ETL run in UTC.
+        end_time (datetime | None): End time of the ETL run in UTC.
+        status (str): Status of the ETL run.
+        total_rows_read (int | None): Total number of rows read during the run.
+        total_rows_written (int | None): Total number of rows written during the run.
+        error_count (int | None): Number of errors encountered during the run.
+        comments (str | None): Additional comments about the ETL run.
+
+        step_audits (list[ETLStepAudit]): Relationship to ETLStepAudit models associated with this run.
+    """
     __tablename__ = "etl_run_audit"
     __table_args__ = (
         UniqueConstraint("etl_run_guid", name="uq_etl_run_guid"),
@@ -130,6 +149,26 @@ class ETLRunAudit(Base):
 
 
 class ETLStepAudit(Base):
+    """
+    ETL Step Audit model representing an audit record for each ETL step within a run.
+    Attributes:
+        etl_step_audit_id (int): Primary key identifier for the ETL step audit.
+        etl_run_id (int): Foreign key to the ETLRunAudit model.
+        etl_step_id (int | None): Foreign key to the ETLStep model.
+        target_db (str | None): Target database name.
+        target_schema (str | None): Target schema name.
+        target_object (str | None): Target object name.
+        rows_read (int | None): Number of rows read during the step.
+        rows_written (int | None): Number of rows written during the step.
+        start_time (datetime): Start time of the ETL step in UTC.
+        end_time (datetime | None): End time of the ETL step in UTC.
+        status (str): Status of the ETL step.
+        error_message (str | None): Error message if the step failed.
+        step_context (dict | None): Additional context for the step as JSON.
+
+        run (ETLRunAudit): Relationship to the parent ETLRunAudit model.
+        etl_step (ETLStep | None): Relationship to the ETLStep model.
+    """
     __tablename__ = "etl_step_audit"
     __table_args__ = (
         {"schema": SCHEMA}
