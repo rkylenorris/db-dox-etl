@@ -1,18 +1,8 @@
-from uuid import uuid4
 from enum import StrEnum
 from typing import Optional
 from dataclasses import dataclass, asdict
 
 from .etl_step import step_to_str, EtlStepType, get_phase_from_step
-
-
-def generate_etl_run_guid() -> str:
-    """Generate a new ETL run GUID as a string."""
-    return str(uuid4())
-
-
-# constant for run guid
-ETL_RUN_GUID = generate_etl_run_guid()
 
 
 class LogLevel(StrEnum):
