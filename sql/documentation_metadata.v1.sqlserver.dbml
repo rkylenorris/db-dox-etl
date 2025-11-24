@@ -391,12 +391,143 @@ Ref: doc.extended_property.column_id   > relational.column_info.column_id
 
 
 ////////////////////////////////////////////////////////
-// Schema: meta (process data; e.g. etl_steps)
+// Schema: meta (process data, audit data, ETL steps)
 ////////////////////////////////////////////////////////
+
+Enum etl_phase_type {
+  pipeline
+  extract
+  parse
+  transform
+  load
+}
+
+Enum etl_step_type {
+  pipeline.main
+  extract.sys.schemas
+  extract.sys.tables
+  extract.sys.columns
+  extract.sys.foreign_keys
+  extract.sys.indexes
+  extract.sys.views
+  extract.sys.procedures
+  extract.sys.functions
+  parse.view.definitions
+  parse.proc.definitions
+  parse.func.definitions
+  parse.relationships
+  transform.dim_objects
+  transform.dim_columns
+  transform.fact_relationships
+  transform.audit
+  load.docdb.dim_objects
+  load.docdb.dim_columns
+  load.docdb.fact_relationships
+  load.docdb.audit
+}
+
+Table meta.etl_phase {
+  etl_phase_id int [pk, increment]
+  name etl_phase_type [not null] // EtlPhase enum values
+  description text 
+  created_at datetime2(3) [not null, default: `getutcdate()`]
+  last_updated_at datetime2(3) [not null, default: `getutcdate()`]
+}
 
 Table meta.etl_step {
   etl_step_id int [pk, increment]
-  code text [not null] // EtlStep enum values
-  phase text [not null] // extract, parse, load
+  etl_phase_id int [not null, ref: > meta.etl_phase.etl_phase_id]
+  step_name etl_step_type [not null] // EtlStep enum values
   description text 
+  created_at datetime2(3) [not null, default: `getutcdate()`]
+  last_updated_at datetime2(3) [not null, default: `getutcdate()`]
+}
+Index IX_etl_step_code on meta.etl_step {
+  step_name
+}
+
+
+Enum etl_environment_type {
+  DEV
+  TEST
+  QA
+  PROD
+}
+
+Enum status_code_type {
+  STARTED
+  SUCCESS
+  FAILED
+  PARTIAL
+  SKIPPED
+}
+
+Enum etl_trigger_type {
+  SCHEDULED
+  MANUAL
+  API
+}
+
+
+// Run-level audit (one row per ETL run)
+
+Table meta.etl_run_audit {
+  etl_run_id          bigint           [pk, increment]
+  job_name            nvarchar(128)    [not null]        // e.g. 'db_dox_metadata_etl'
+  environment         etl_environment_type [not null]    // DEV, TEST, QA, PROD
+  start_time_utc      datetime2(3)      [not null, default: `getutcdate()`]
+  end_time_utc        datetime2(3)
+  status_code         status_code_type [not null, default: status_code_type.STARTED] // STARTED, SUCCESS, FAILED, PARTIAL
+  total_rows_read     bigint
+  total_rows_written  bigint
+  error_count         int
+  trigger_type        etl_trigger_type [not null, default: etl_trigger_type.SCHEDULED]    // 'SCHEDULED', 'MANUAL', 'API', etc.
+  trigger_user        nvarchar(128)
+  etl_run_guid      uniqueidentifier  [not null, unique]      // external tracing id
+  comments            nvarchar(4000)
+
+  Note: 'Schema: meta. Run-level ETL audit (one row per job execution).'
+}
+
+Index IX_etl_run_job_start on meta.etl_run_audit {
+  job_name,
+  start_time_utc
+}
+
+
+// Step-level audit (one row per step within a run)
+
+Table meta.etl_step_audit {
+  etl_step_audit_id   bigint           [pk, increment]
+  etl_run_id          bigint           [not null, ref: > meta.etl_run_audit.etl_run_id]
+
+  etl_phase_id          int      [not null: ref: > meta.etl_phase.etl_phase_id]        // extract, parse, transform, load
+  step_id           int      [not null: ref: > meta.etl_step.etl_step_id]          // specific step within phase
+
+  source_system       varchar(100)
+  source_object       nvarchar(256)
+  target_system       varchar(100)
+  target_object       nvarchar(256)
+
+  rows_read           bigint
+  rows_written        bigint
+
+  start_time_utc      datetime2(3)     [not null, default: `getutcdate()`]
+  end_time_utc        datetime2(3)
+
+  status_code         etl_status_code_type     [not null, default: etl_status_code_type.STARTED] // STARTED, SUCCESS, FAILED, SKIPPED
+  error_message       nvarchar(4000)
+
+  extra_context_json  nvarchar(max)                    // JSON bag for step-specific context
+
+  Note: 'Schema: etl_audit. Step-level ETL audit (one row per step per run).'
+}
+
+Index IX_etl_step_run_step on etl_audit.etl_step_audit {
+  etl_run_id,
+  step_name
+}
+
+Index IX_etl_step_time on etl_audit.etl_step_audit {
+  start_time_utc
 }
