@@ -41,10 +41,8 @@ class EtlStep(StrEnum):
     LOAD_FACT_RELATIONS = "load.docdb.fact_relationships"
     LOAD_AUDIT = "load.docdb.audit"
 
-# --- Helper function to pass EtlStep enum values as strings into get_etl_logger
 
-
-# an either/or type so the helper function can accept strings or enums
+# an either/or type so the helper function step_to_str can accept strings or enums
 EtlStepType = Union[str, EtlStep]
 
 
@@ -72,4 +70,4 @@ def get_phase_from_step(step: EtlStepType) -> str:
         str: The high-level ETL phase (e.g. 'extract', 'parse', 'transform', 'load').
     """
     step_str = step_to_str(step)
-    return step_str.split(".")[0]  # phase is the first segment
+    return step_str.split(".")[0]  # phase is the first index

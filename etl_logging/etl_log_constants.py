@@ -7,13 +7,24 @@ from .etl_log_context import LogLevel
 
 
 def generate_etl_run_guid() -> str:
-    """Generate a new ETL run GUID as a string."""
+    """Generate a new ETL run GUID as a string.
+    Returns:
+        str: A new ETL run GUID.
+    """
     return str(uuid4())
 
 
 @dataclass
 class ETLLogConstants:
-    """Constants for ETL logging configuration."""
+    """Constants for ETL logging configuration.
+    Attributes:
+        app_name (str): Name of the application.
+        run_guid (str): Unique identifier for the ETL run.
+        console_log_level (LogLevel): Log level for console output.
+        file_log_level (LogLevel): Log level for file output.
+        log_directory (Path): Directory path for log files.
+        json_log (bool): Whether to output logs in JSON format.
+    """
     app_name: str
     run_guid: str
     console_log_level: LogLevel

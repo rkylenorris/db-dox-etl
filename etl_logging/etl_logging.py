@@ -16,15 +16,13 @@ This module centralizes Loguru configuration and provides helpers for:
 
 import sys
 import time
+import loguru
 import logging
-import json
 
 from pathlib import Path
 from functools import wraps
 from loguru import logger as _base_logger
 from typing import Callable, Optional, Any
-from dataclasses import dataclass
-from uuid import uuid4
 
 from .etl_log_context import ETLLogContext
 from .etl_log_constants import ETLLogConstants, get_constants
@@ -99,12 +97,9 @@ def configure_logging(
     Configure Loguru logging for db-dox-phase-1-etl.
 
     Parameters:
-        log_dir (str): Directory for log files.
-        app_name (str): Name of the app for context (in JSON logs etc.).
-        console_log_level (str): Level for console output.
-        file_log_level (str): Level for file output.
-        json_log (bool): Whether to output structured JSON logs.
+        logging_constants (ETLLogConstants): Configuration constants for logging.
     """
+    # Ensure log directory exists
     logging_constants.log_directory.mkdir(parents=True, exist_ok=True)
 
     # Remove all existing sinks
@@ -167,18 +162,15 @@ def configure_logging(
 
 def get_etl_logger(
     logger_context: Optional[ETLLogContext] = None
-):
+) -> loguru.Logger:
     """
     Return a logger bound with ETL context.
 
-    Example:
-        run_id = "2025-11-23T1600Z"
-        db_logger = get_etl_logger(
-            db_name="MySourceDb",
-            etl_step="extract.sys.tables",
-            run_id=run_id,
-        )
-        db_logger.info("Extracting table metadata")
+    Args:
+        logger_context (Optional[ETLLogContext]): The ETL context to bind.
+            If None, a default context with placeholder values is used.
+    Returns:
+        loguru.Logger: A Loguru logger instance with ETL context bound.
     """
     if logger_context is None:
         logger_context = ETLLogContext()
@@ -196,18 +188,10 @@ def log_etl_step(
     - Includes etl_step, db_name, and optional run_id in context
     - Logs full traceback on failure
 
-    Example:
-        @log_etl_step("extract.sys.tables", db_name="MyDb")
-        def extract_sys_tables(conn):
-            ...
-
-    With a dynamic run_id:
-        run_id = uuid4().hex
-        def get_run_id(): return run_id
-
-        @log_etl_step("parse.procedures", db_name="MyDb", run_id_getter=get_run_id)
-        def parse_procedures(...):
-            ...
+    Args:
+        log_context (ETLLogContext): The ETL context to bind for the step.
+    Returns:
+        Callable: The decorated function with ETL step logging.
     """
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

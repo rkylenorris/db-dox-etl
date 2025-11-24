@@ -19,6 +19,24 @@ class LogLevel(StrEnum):
 
 @dataclass
 class ETLLogContext:
+    """
+    Contextual information for ETL logging.
+    Attributes:
+        source_db_name (str): Name of the source database.
+        etl_run_id (str): Unique identifier for the ETL run.
+        etl_phase (str): Current ETL phase (e.g. 'extract', 'parse', 'transform', 'load').
+        etl_step (str): Current ETL step identifier.
+
+    Methods:
+        update_step(etl_step: EtlStepType) -> None:
+            Update the current ETL step and phase.
+        update_run_id(etl_run_id: str) -> None:
+            Update the ETL run identifier.
+        update_source_db_name(source_db_name: str) -> None:
+            Update the source database name.
+        to_bind_kwargs() -> dict:
+            Convert the context to a dictionary for logger binding.
+    """
     source_db_name: str
     etl_run_id: str
     etl_phase: str
