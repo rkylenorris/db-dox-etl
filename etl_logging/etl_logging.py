@@ -26,41 +26,13 @@ from typing import Callable, Optional, Any
 from dataclasses import dataclass
 from uuid import uuid4
 
-from .etl_log_context import LogLevel, ETLLogContext
-
-
-def generate_etl_run_guid() -> str:
-    """Generate a new ETL run GUID as a string."""
-    return str(uuid4())
-
-
-@dataclass
-class ETLLogConstants:
-    app_name: str
-    run_guid: str
-    console_log_level: LogLevel
-    file_log_level: LogLevel
-    log_directory: Path
-    json_log: bool
-
-    def __init__(self, app_name: str, console_log_level: str, file_log_level: str,
-                 log_directory: str, json_log: bool):
-        self.app_name = app_name
-        self.run_guid = generate_etl_run_guid()
-        self.console_log_level = LogLevel(console_log_level)
-        self.file_log_level = LogLevel(file_log_level)
-        self.log_directory = Path(log_directory)
-        self.json_log = json_log
-
-
-def get_constants(path: Path) -> ETLLogConstants:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return ETLLogConstants(**data)
+from .etl_log_context import ETLLogContext
+from .etl_log_constants import ETLLogConstants, get_constants
 
 
 # constants
-CONSTANTS = get_constants(Path(__file__).parent / "etl_log_constants.json")
+constants_path = Path(__file__).parent / "etl_log_constants.json"
+CONSTANTS = get_constants(constants_path)
 
 
 # --- Intercept standard logging and redirect to Loguru ------------------------
@@ -97,8 +69,10 @@ def intercept_stdlib_logging() -> None:
 
 def _add_default_extra(record: Any) -> None:
     """
-    Ensure our ETL context fields exist so format strings don't explode
-    when they aren't bound.
+    Create ETL context records and add default values if missing.
+    This ensures that all logs have a consistent set of extra fields.
+    Args:
+        record (Any): The Loguru log record to modify.
     """
     extra = record["extra"]
     extra.setdefault("app_name", "-")
