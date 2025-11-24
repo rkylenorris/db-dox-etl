@@ -12,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from .meta_enums import JobEnv, RunTriggerType, Status
 from ..base import Base
 
 # constants; schema name and timezone for date fields
@@ -126,19 +127,21 @@ class ETLRunAudit(Base):
         String(36), nullable=False, unique=True)
     job_name: Mapped[str] = mapped_column(
         String(256), nullable=False)  # e.g. "db_dox_etl_adventureworks"
-    environment: Mapped[str] = mapped_column(
-        String(64), nullable=False)  # e.g. "development", "production"
-    trigger_type: Mapped[str] = mapped_column(String(
-        64), nullable=False, default="SCHEDULED")  # e.g. "manual", "scheduled", "event"
+    environment: Mapped[JobEnv] = mapped_column(
+        # e.g. "development", "production"
+        String(64), nullable=False, default=JobEnv.DEVELOPMENT.value)
+    trigger_type: Mapped[RunTriggerType] = mapped_column(String(
+        # e.g. "manual", "scheduled", "event"
+        64), nullable=False, default=RunTriggerType.SCHEDULED.value)
     # e.g. username or system that triggered the run
     triggered_by: Mapped[str | None] = mapped_column(String(128))
     start_time: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), nullable=False, default=get_utc_now())
     end_time: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=False))
-    status: Mapped[str] = mapped_column(
+    status: Mapped[Status] = mapped_column(
         # e.g. "IN_PROGRESS", "COMPLETED", "FAILED"
-        String(32), nullable=False, default="IN_PROGRESS")
+        String(32), nullable=False, default=Status.IN_PROGRESS.value)
     total_rows_read: Mapped[int | None] = mapped_column(BigInteger)
     total_rows_written: Mapped[int | None] = mapped_column(BigInteger)
     error_count: Mapped[int | None] = mapped_column(Integer)
@@ -195,8 +198,8 @@ class ETLStepAudit(Base):
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=False))
 
     # e.g. "IN_PROGRESS", "COMPLETED", "FAILED"
-    status: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="IN_PROGRESS")
+    status: Mapped[Status] = mapped_column(
+        String(32), nullable=False, default=Status.IN_PROGRESS.value)
     error_message: Mapped[str | None] = mapped_column(Text())
 
     step_context: Mapped[dict | None] = mapped_column(
