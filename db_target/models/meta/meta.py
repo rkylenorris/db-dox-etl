@@ -80,7 +80,8 @@ class ETLStep(Base):
     phase_id: Mapped[int] = mapped_column(
         Integer, ForeignKey(f"{SCHEMA}.etl_phase.id"), nullable=False
     )
-    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    code: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(Text())
 
     created_at: Mapped[datetime] = mapped_column(
