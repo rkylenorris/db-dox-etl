@@ -13,7 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .meta_enums import JobEnv, RunTriggerType, Status
-from ..base import Base
+from ...base import Base
 
 # constants; schema name and timezone for date fields
 SCHEMA = "meta"
