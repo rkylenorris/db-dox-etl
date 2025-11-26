@@ -11,7 +11,8 @@ class EtlStep(StrEnum):
         string-backed enum (StrEnum) so it can be compared to and serialized as a
         regular string when storing logs, emitting metrics, or tagging events.
     """
-    PIPELINE = "pipeline.main"
+    PIPELINE_START = "pipeline.main.start"
+    PIPELINE_END = "pipeline.main.end"
 
     # Phase 1 – Source metadata extraction
     EXTRACT_SYS_SCHEMAS = "extract.sys.schemas"
@@ -71,3 +72,7 @@ def get_phase_from_step(step: EtlStepType) -> str:
     """
     step_str = step_to_str(step)
     return step_str.split(".")[0]  # phase is the first index
+
+
+def normalize_step_name(step_enum_name: str) -> str:
+    return step_enum_name.replace("_", " ").title()
