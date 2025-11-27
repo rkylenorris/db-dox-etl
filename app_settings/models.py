@@ -16,7 +16,7 @@ class DbSettings(BaseModel):
     db_type: SqlType
     host: str  # server address
     port: int | None = None  # optional port
-    database: str
+    database: str  # database name
     credentials: DBCredentials
     driver: str | None = None  # optional driver for some DBs
 
