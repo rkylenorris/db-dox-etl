@@ -19,6 +19,7 @@ class LogLevel(Enum):
 class SqlType(Enum):
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
+    MYSQL_PYMYSQL = "mysql+pymysql"
     SQLSERVER = "mssql"
     # ORACLE = "oracle"
     SQLITE = "sqlite"
