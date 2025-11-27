@@ -14,7 +14,7 @@ This README documents the public API, configuration, and usage examples for `etl
 ## Location
 
 - Module: `etl_logging/etl_logging.py`
-- Constants file: `etl_logging/etl_log_constants.json` (loaded at import time into `CONSTANTS`)
+- Constants module: `etl_logging/etl_log_constants.py` (provides `ETLLogConstants`, `get_constants`) and the JSON file `etl_logging/etl_log_constants.json` (loaded at import time into module-level `CONSTANTS`).
 
 ## Configuration file schema
 
@@ -38,27 +38,31 @@ This README documents the public API, configuration, and usage examples for `etl
 
 ## Public API
 
-- `CONSTANTS` — module-level `ETLLogConstants` instance loaded from `etl_log_constants.json`.
+- `ETLLogConstants` — dataclass configuration object (defined in `etl_logging/etl_log_constants.py`).
+- `get_constants(path: Path)` -> `ETLLogConstants` — loader factory (defined in `etl_logging/etl_log_constants.py`) that reads the JSON config.
+- `constants_path` — module-level Path used to locate the JSON file when `CONSTANTS` is created.
+- `CONSTANTS` — module-level `ETLLogConstants` instance, created at import time by calling `get_constants(constants_path)`.
 - `generate_etl_run_guid()` -> `str` — create a new run GUID (UUID4 as string).
 - `get_constants(path: Path)` -> `ETLLogConstants` — load constants from JSON file.
 - `configure_logging(logging_constants: ETLLogConstants = CONSTANTS) -> None` — initialize Loguru sinks and route stdlib logging.
-- `get_etl_logger(logger_context: Optional[ETLLogContext] = None)` -> `loguru.logger` — returns a logger bound with ETL context (app_name, source_db_name, etl_step, etc.).
+- `get_etl_logger(logger_context: Optional[ETLLogContext] = None)` -> `loguru.Logger` — returns a logger bound with an `ETLLogContext` instance. The context is used to bind `source_db_name`, `etl_run_id`, `etl_phase`, and `etl_step` into the logger's extra fields.
 - `log_etl_step(log_context: ETLLogContext)` -> decorator — decorator to wrap an ETL step; logs start, completion, duration, and exceptions.
 
 Internally the module also exposes `InterceptHandler` and `intercept_stdlib_logging()` which route the standard library `logging` into Loguru.
 
 ## Usage examples
 
-1) Basic initialization
+### Basic initialization
 
 ```python
 from pathlib import Path
 from etl_logging import configure_logging, get_constants
 
-# load constants from repo file (module does this by default too)
-constants = get_constants(Path(__file__).parent / "etl_logging" / "etl_log_constants.json")
+# The module exposes a `CONSTANTS` object at import-time which loads
+# `etl_log_constants.json`. You can also load constants manually.
+from etl_logging import configure_logging, CONSTANTS
 
-configure_logging(constants)
+configure_logging(CONSTANTS)
 
 # later
 from etl_logging import get_etl_logger
@@ -66,29 +70,31 @@ log = get_etl_logger()
 log.info("ETL runner started")
 ```
 
-2) Bind ETL context per-step
+### Bind ETL context per-step
 
 ```python
 from etl_logging import get_etl_logger
 from etl_logging.etl_log_context import ETLLogContext
 
+# ETLLogContext holds per-step runtime fields — note the `etl_run_id` field
+# is separate from the global `etl_run_guid` created by `ETLLogConstants`.
 ctx = ETLLogContext(
-    source_db_name="MySourceDB",
-    etl_phase="extract",
-    etl_step="extract.sys.tables",
+  source_db_name="MySourceDB",
+  etl_run_id="run-2025-11-27T10:00Z",
+  etl_step="extract.sys.tables",
 )
 
 step_logger = get_etl_logger(ctx)
 step_logger.info("Reading table metadata")
 ```
 
-3) Using the `log_etl_step()` decorator
+### Using the `log_etl_step()` decorator
 
 ```python
 from etl_logging import log_etl_step
 from etl_logging.etl_log_context import ETLLogContext
 
-ctx = ETLLogContext(source_db_name="MyDb", etl_phase="extract", etl_step="extract.sys.tables")
+ctx = ETLLogContext(source_db_name="MyDb", etl_run_id="2025-11-27-run", etl_step="extract.sys.tables")
 
 @log_etl_step(ctx)
 def extract_tables(conn):
@@ -99,14 +105,16 @@ def extract_tables(conn):
 extract_tables(conn)
 ```
 
-4) Structured JSON logs
+### Structured JSON logs
 
 If `json_log` is enabled in `etl_log_constants.json`, a JSON file sink will be added. Each record will include the bound extras like `app_name` and `etl_run_guid` making downstream processing and ingestion into logging systems easy.
 
 ## Notes and best practices
 
-- The module binds `app_name` and `etl_run_guid` globally when `configure_logging()` runs. Use `get_etl_logger()` to bind step-specific context such as `source_db_name`, `etl_phase`, and `etl_step`.
-- When you need to generate the same `etl_run_guid` across modules, create it once with `generate_etl_run_guid()` (or read from environment) and pass it into a constants-like object or `ETLLogContext`.
+- The logging configuration stores two related concepts:
+  - `etl_run_guid` (global GUID): created by `ETLLogConstants` at startup; it's bound globally during `configure_logging()` and is included on every log record as `etl_run_guid`.
+  - `etl_run_id` (runtime/per-step id): part of `ETLLogContext` and used to identify a particular run or job instance (for example a timestamped run id). Bind it per-step with `get_etl_logger()` or via `log_etl_step()`.
+- When you need to generate the same `etl_run_guid` across processes, generate it once and pass it in (or set it in `ETLLogConstants`/the JSON file) so all processes share the same GUID.
 - By default the module routes stdlib `logging` into Loguru. Avoid adding additional `logging.basicConfig` calls after `configure_logging()` unless you understand how the handlers interact.
 - For high-throughput, the file sinks use `enqueue=True` which is safe for multiprocessing.
 
