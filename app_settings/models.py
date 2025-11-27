@@ -1,0 +1,46 @@
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from .utils import LogLevel, Environment, SqlType, CONNECTION_TEMPLATES
+
+
+class DBCredentials(BaseModel):
+    user: str
+    password: str
+
+    def __str__(self) -> str:
+        return f"{self.user}:{self.password}"
+
+
+class DbSettings(BaseModel):
+    db_type: SqlType
+    host: str  # server address
+    port: int | None = None  # optional port
+    database: str
+    credentials: DBCredentials
+    driver: str | None = None  # optional driver for some DBs
+
+    @property
+    def connection_string(self) -> str:
+        if self.db_type == SqlType.SQLSERVER:
+            if self.port:
+                template = CONNECTION_TEMPLATES["mssql"]["port"]
+            else:
+                template = CONNECTION_TEMPLATES["mssql"]["no_port"]
+            return template.format(
+                user=self.credentials.user,
+                password=self.credentials.password,
+                host=self.host,
+                port=self.port if self.port else "",
+                database=self.database,
+                driver=self.driver if self.driver else "ODBC+Driver+17+for+SQL+Server"
+            )
+        else:
+            template = CONNECTION_TEMPLATES[self.db_type.value]
+            return template.format(
+                user=self.credentials.user,
+                password=self.credentials.password,
+                host=self.host,
+                port=self.port if self.port else "",
+                database=self.database
+            )
