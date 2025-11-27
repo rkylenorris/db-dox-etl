@@ -40,6 +40,5 @@ CONNECTION_TEMPLATES = {
                 "?driver={driver}&TrustServerCertificate=yes"
             )
         },
-    "sqlite": "sqlite:///{path_to_file}",
-    "sqlite_memory": "sqlite:///:memory:",
+    "sqlite": "sqlite:///{path_to_file}"
 }
