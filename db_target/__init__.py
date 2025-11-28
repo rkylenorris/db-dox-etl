@@ -2,7 +2,7 @@ from .base import Base
 from .models.meta import (ETLPhase, ETLStep,
                           ETLRunAudit, ETLStepAudit,
                           JobEnv, RunTriggerType, Status)
-from .session import get_db_session
+from .session import get_db_session, connection_test
 __all__ = [
     "Base",
     "ETLPhase",
@@ -13,4 +13,5 @@ __all__ = [
     "RunTriggerType",
     "Status",
     "get_db_session",
+    "connection_test",
 ]

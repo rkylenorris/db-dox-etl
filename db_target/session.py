@@ -1,23 +1,16 @@
+from app_settings import get_app_settings
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
-from dotenv import load_dotenv
-import os
 
-# Load environment variables from .env file
-load_dotenv()
-db_url_prefix = os.getenv("DOX_DB_URL_PREFIX")
-db_username = os.getenv("DOX_DB_USERNAME")
-db_password = os.getenv("DOX_DB_PASSWORD")
-db_server = os.getenv("DOX_DB_SERVER")
-db_name = os.getenv("DOX_DB_NAME")
-db_driver = os.getenv("DOX_DB_DRIVER")
+from sqlalchemy.orm import sessionmaker, Session
+
+# create/get app settings
+settings = get_app_settings()
 
 # create connection string
-CONNECTION_STRING = (
-    f"{db_url_prefix}{db_username}:{db_password}@{db_server}/{db_name}"
-    f"?driver={db_driver}"
-    "&Encrypt=no&TrustServerCertificate=yes"
-)
+if not settings.dox_db:
+    raise ValueError("Database settings are not configured properly.")
+
+CONNECTION_STRING = settings.dox_db.connection_string
 
 # Create the SQLAlchemy engine and session factory
 engine = create_engine(CONNECTION_STRING, echo=False, future=True)
@@ -33,7 +26,18 @@ def get_db_session() -> Session:
     return SessionLocal()
 
 
-if __name__ == "__main__":
-    with engine.connect() as connection:
-        print("Database connection successful.")
-        print(connection.execute(text("SELECT DB_NAME()")).scalar_one())
+# function to test the database connection
+def connection_test() -> bool:
+    """
+    Test if database can connect.
+    Returns:
+        bool: True if the connection is successful, False otherwise.
+    """
+    test_result = False
+    try:
+        connection = engine.connect()
+        test_result = True
+        connection.close()
+    except Exception as e:
+        test_result = False
+    return test_result
