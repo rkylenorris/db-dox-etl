@@ -35,18 +35,18 @@ class SqlType(Enum):
 
 
 CONNECTION_TEMPLATES = {
-    "postgres": "postgresql+psycopg://{credentials}@{host}:{port}/{database}",
+    "postgresql": "postgresql+psycopg://{credentials}@{host}:{port}/{database}",
     "mysql": "mysql+mysqldb://{credentials}@{host}:{port}/{database}",
     "mysql+pymysql": "mysql+pymysql://{credentials}@{host}:{port}/{database}",
     "mssql":
         {
             "port": (
                 "mssql+pyodbc://{credentials}@{host}:{port}/{database}"
-                "?driver={driver}&TrustServerCertificate=yes"
+                "?driver={driver}&TrustServerCertificate=yes&Encrypt=no"
             ),
             "no_port": (
                 "mssql+pyodbc://{credentials}@{host}/{database}"
-                "?driver={driver}&TrustServerCertificate=yes"
+                "?driver={driver}&TrustServerCertificate=yes&Encrypt=no"
             )
         },
     "sqlite": "sqlite:///{path_to_file}"
