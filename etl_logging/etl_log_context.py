@@ -23,29 +23,27 @@ class ETLLogContext:
     Contextual information for ETL logging.
     Attributes:
         source_db_name (str): Name of the source database.
-        etl_run_id (str): Unique identifier for the ETL run.
+        etl_run_guid (str): Unique identifier for the ETL run.
         etl_phase (str): Current ETL phase (e.g. 'extract', 'parse', 'transform', 'load').
         etl_step (str): Current ETL step identifier.
 
     Methods:
         update_step(etl_step: EtlStepType) -> None:
             Update the current ETL step and phase.
-        update_run_id(etl_run_id: str) -> None:
-            Update the ETL run identifier.
         update_source_db_name(source_db_name: str) -> None:
             Update the source database name.
         to_bind_kwargs() -> dict:
             Convert the context to a dictionary for logger binding.
     """
     source_db_name: str
-    etl_run_id: str
+    etl_run_guid: str
     etl_phase: str
     etl_step: str
 
     def __init__(self, source_db_name: Optional[str] = None,
-                 etl_run_id: Optional[str] = None, etl_step: Optional[EtlStepType] = None):
+                 etl_run_guid: Optional[str] = None, etl_step: Optional[EtlStepType] = None):
         self.source_db_name = source_db_name if source_db_name is not None else "-"
-        self.etl_run_id = etl_run_id if etl_run_id is not None else "-"
+        self.etl_run_guid = etl_run_guid if etl_run_guid is not None else "-"
         self.etl_step = step_to_str(etl_step) if etl_step is not None else "-"
         self.etl_phase = get_phase_from_step(
             etl_step) if etl_step is not None else "-"
@@ -53,9 +51,6 @@ class ETLLogContext:
     def update_step(self, etl_step: EtlStepType) -> None:
         self.etl_step = step_to_str(etl_step)
         self.etl_phase = get_phase_from_step(etl_step)
-
-    def update_run_id(self, etl_run_id: str) -> None:
-        self.etl_run_id = etl_run_id
 
     def update_source_db_name(self, source_db_name: str) -> None:
         self.source_db_name = source_db_name
