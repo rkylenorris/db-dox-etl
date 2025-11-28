@@ -1,5 +1,8 @@
+from db_target import connection_test
+
+
 def main():
-    print("Hello from db-dox-etl!")
+    connection_test()
 
 
 if __name__ == "__main__":
