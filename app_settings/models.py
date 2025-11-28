@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
 
-from .utils import LogLevel, Environment, SqlType, CONNECTION_TEMPLATES
+from .utils import LogLevel, Environment, SqlType, CONNECTION_TEMPLATES, generate_run_guid
 
 
 class DBCredentials(BaseModel):
@@ -22,10 +23,7 @@ class DbSettings(BaseModel):
 
     @property
     def connection_string(self) -> str:
-        if self.db_type == SqlType.SQLITE_MEMORY:
-            template = CONNECTION_TEMPLATES["sqlite_memory"]
-            return template
-        elif self.db_type == SqlType.SQLITE:
+        if self.db_type == SqlType.SQLITE:
             template = CONNECTION_TEMPLATES["sqlite"]
             return template.format(
                 path_to_file=self.database
@@ -36,8 +34,7 @@ class DbSettings(BaseModel):
             else:
                 template = CONNECTION_TEMPLATES["mssql"]["no_port"]
             return template.format(
-                user=self.credentials.user,
-                password=self.credentials.password,
+                credentials=str(self.credentials),
                 host=self.host,
                 port=self.port if self.port else "",
                 database=self.database,
@@ -54,3 +51,39 @@ class DbSettings(BaseModel):
                 port=self.port if self.port else "",
                 database=self.database
             )
+
+
+class LogSettings(BaseModel):
+    run_guid: str = generate_run_guid()
+    console_log_level: LogLevel = LogLevel.INFO
+    file_log_level: LogLevel = LogLevel.DEBUG
+    log_directory: Path = Path("./logs")
+    json_log: bool = True
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        self.log_directory.mkdir(parents=True, exist_ok=True)
+
+
+class FeatureFlags(BaseModel):
+    enable_llm_integration: bool = False
+
+
+class AppSettings(BaseSettings):
+    """Application settings for ETL process.
+    Attributes:
+        dox_db_settings (DbSettings): Database connection settings for documentation database.
+        log_settings (LogSettings): Logging configuration settings.
+        environment (Environment): Application environment (development, testing, production).
+    """
+    dox_db_settings: DbSettings
+    source_dbs_settings: list[DbSettings]
+    log_settings: LogSettings = LogSettings()
+    feature_flags: FeatureFlags = FeatureFlags()
+    environment: Environment = Environment.DEVELOPMENT
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False
+    )

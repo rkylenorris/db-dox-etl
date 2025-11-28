@@ -1,4 +1,13 @@
 from enum import Enum
+from uuid import uuid4
+
+
+def generate_run_guid() -> str:
+    """Generate a new ETL run GUID as a string.
+    Returns:
+        str: A new ETL run GUID.
+    """
+    return str(uuid4())
 
 
 class Environment(Enum):
@@ -26,17 +35,17 @@ class SqlType(Enum):
 
 
 CONNECTION_TEMPLATES = {
-    "postgres": "postgresql+psycopg://{user}:{password}@{host}:{port}/{database}",
-    "mysql": "mysql+mysqldb://{user}:{password}@{host}:{port}/{database}",
-    "mysql+pymysql": "mysql+pymysql://{user}:{password}@{host}:{port}/{database}",
+    "postgres": "postgresql+psycopg://{credentials}@{host}:{port}/{database}",
+    "mysql": "mysql+mysqldb://{credentials}@{host}:{port}/{database}",
+    "mysql+pymysql": "mysql+pymysql://{credentials}@{host}:{port}/{database}",
     "mssql":
         {
             "port": (
-                "mssql+pyodbc://{user}:{password}@{host}:{port}/{database}"
+                "mssql+pyodbc://{credentials}@{host}:{port}/{database}"
                 "?driver={driver}&TrustServerCertificate=yes"
             ),
             "no_port": (
-                "mssql+pyodbc://{user}:{password}@{host}/{database}"
+                "mssql+pyodbc://{credentials}@{host}/{database}"
                 "?driver={driver}&TrustServerCertificate=yes"
             )
         },
