@@ -1,7 +1,9 @@
 from enum import Enum
 from uuid import uuid4
+from functools import lru_cache
 
 
+@lru_cache
 def generate_run_guid() -> str:
     """Generate a new ETL run GUID as a string.
     Returns:

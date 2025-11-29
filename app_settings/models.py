@@ -118,7 +118,7 @@ class AppSettings(BaseSettings):
         environment (Environment): Application environment (development, staging, production).
 
     """
-    app_name: str = "db_dox_etl"
+    app_name: str = "db-dox ETL"
     dox_db: DbSettings | None = None
     source_dbs_file: str | None = None
     source_dbs: list[DbSettings] = []
