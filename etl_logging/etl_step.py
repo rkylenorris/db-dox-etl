@@ -11,8 +11,8 @@ class EtlStep(StrEnum):
         string-backed enum (StrEnum) so it can be compared to and serialized as a
         regular string when storing logs, emitting metrics, or tagging events.
     """
-    PIPELINE_START = "pipeline.main.start"
-    PIPELINE_END = "pipeline.main.end"
+    META_START = "meta.pipeline.start"
+    META_END = "meta.pipeline.end"
 
     # Phase 1 – Source metadata extraction
     EXTRACT_SYS_SCHEMAS = "extract.sys.schemas"
@@ -75,4 +75,60 @@ def get_phase_from_step(step: EtlStepType) -> str:
 
 
 def normalize_step_name(step_enum_name: str) -> str:
-    return step_enum_name.replace("_", " ").title()
+    return step_enum_name.replace(".", " ").title()
+
+
+def get_all_phases() -> list[str]:
+    phases = set()
+    for step in EtlStep:
+        phase = get_phase_from_step(step)
+        phases.add(phase)
+    return list(phases)
+
+
+if __name__ == "__main__":
+    # converting enum to json serializable dict
+    import json
+    steps = []
+    phases = []
+
+    phases_and_ids = {p_name.upper(): i for i,
+                      p_name in enumerate(get_all_phases(), start=1)}
+
+    for i, step in enumerate(EtlStep, start=1):
+        # gather phase & step info
+        step_id = i
+        step_key = step.name
+        step_name = normalize_step_name(step.value)
+        step_code = step.value
+        phase_key = get_phase_from_step(step).upper()
+        phase_name = phase_key.title()
+        phase_id = phases_and_ids[phase_key]
+
+        # create step dict
+        step_dict = {
+            "id": step_id,
+            "phase_id": phase_id,
+            "key": step_key,
+            "name": step_name,
+            "code": step_code,
+            "description": None,
+        }
+        steps.append(step_dict)
+
+        # create phase dict and add to set
+        if phase_id not in [phase["id"] for phase in phases]:
+            phase_dict = {
+                "id": phase_id,
+                "key": phase_key,
+                "name": phase_name,
+                "description": None,
+            }
+            phases.append(phase_dict)
+
+        output = {
+            "phases": phases,
+            "steps": steps,
+        }
+
+        json.dump(output, fp=open("etl_steps_and_phases.json", "w"), indent=4)
