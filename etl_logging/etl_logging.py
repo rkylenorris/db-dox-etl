@@ -25,12 +25,11 @@ from loguru import logger as _base_logger
 from typing import Callable, Optional, Any
 
 from .etl_log_context import ETLLogContext
-from .etl_log_constants import ETLLogConstants, get_constants
+from .etl_log_constants import ETLLogConstants, get_constants, DEFAULT_EXTRA_FIELDS
 
 
 # constants
-constants_path = Path(__file__).parent / "etl_log_constants.json"
-CONSTANTS = get_constants(constants_path)
+CONSTANTS = get_constants()
 
 
 # --- Intercept standard logging and redirect to Loguru ------------------------
@@ -73,13 +72,9 @@ def _add_default_extra(record: Any) -> None:
         record (Any): The Loguru log record to modify.
     """
     extra = record["extra"]
-    extra.setdefault("app_name", "-")
-    extra.setdefault("source_db_name", "-")
-    extra.setdefault("etl_run_guid", "-")
-    extra.setdefault("etl_run_id", "-")
-    extra.setdefault("etl_phase", "-")
-    extra.setdefault("etl_step", "-")
 
+    for field in DEFAULT_EXTRA_FIELDS:
+        extra.setdefault(field, "-")
     # No return; we mutate in place
 
 
@@ -103,8 +98,6 @@ def configure_logging(
     Returns:
         loguru.Logger: The configured Loguru logger instance.
     """
-    # Ensure log directory exists
-    logging_constants.log_directory.mkdir(parents=True, exist_ok=True)
 
     # Remove all existing sinks
     logger.remove()

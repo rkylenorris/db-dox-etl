@@ -1,17 +1,18 @@
 from dataclasses import dataclass
-from uuid import uuid4
 from pathlib import Path
-import json
-
-from .etl_log_context import LogLevel
+from app_settings import get_app_settings, AppSettings, LogLevel
 
 
-def generate_etl_run_guid() -> str:
-    """Generate a new ETL run GUID as a string.
-    Returns:
-        str: A new ETL run GUID.
-    """
-    return str(uuid4())
+DEFAULT_EXTRA_FIELDS = [
+    "app_name",
+    "source_db_name",
+    "etl_run_guid",
+    "etl_run_id",
+    "etl_phase",
+    "etl_step"
+]
+
+settings = get_app_settings()
 
 
 @dataclass
@@ -32,31 +33,21 @@ class ETLLogConstants:
     log_directory: Path
     json_log: bool
 
-    def __init__(self, app_name: str, console_log_level: str, file_log_level: str,
-                 log_directory: str, json_log: bool):
-        self.app_name = app_name
-        self.run_guid = generate_etl_run_guid()
-        self.console_log_level = LogLevel(console_log_level)
-        self.file_log_level = LogLevel(file_log_level)
-        self.log_directory = Path(log_directory)
-        self.json_log = json_log
+    def __init__(self, settings: AppSettings):
+        self.app_name = settings.app_name
+        self.run_guid = settings.log.run_guid
+        self.console_log_level = settings.log.console_log_level
+        self.file_log_level = settings.log.file_log_level
+        self.log_directory = settings.log.log_directory
+        self.json_log = settings.log.json_log
 
 
-def get_constants(path: Path) -> ETLLogConstants:
-    """
-    Load ETL logging constants from a JSON file.
-    Args:
-        path (Path): Path to the JSON file containing ETL logging constants.
-    Returns:
-        ETLLogConstants: The loaded ETL logging constants.
-    """
-    with open(path, "r", encoding="utf-8-sig") as f:
-        data = json.load(f)
-    return ETLLogConstants(**data)
+def get_constants() -> ETLLogConstants:
+    """Load ETL logging constants from application settings."""
+    return ETLLogConstants(settings)
 
 
 if __name__ == "__main__":
     # example usage
-    constants_path = Path("etl_logging\\etl_log_constants.json")
-    etl_logging_constants = get_constants(constants_path)
+    etl_logging_constants = get_constants()
     print(etl_logging_constants)

@@ -2,19 +2,11 @@ from enum import StrEnum
 from typing import Optional
 from dataclasses import dataclass, asdict
 
-from .etl_step import step_to_str, EtlStepType, get_phase_from_step
+from app_settings import get_app_settings, AppSettings, LogLevel
+from definitions import EtlPhaseDefinition, EtlStepDefinition, get_phase_of_step
 
 
-class LogLevel(StrEnum):
-    """Standard log levels for configuration."""
-
-    TRACE = "TRACE"
-    DEBUG = "DEBUG"
-    INFO = "INFO"
-    SUCCESS = "SUCCESS"
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    CRITICAL = "CRITICAL"
+settings = get_app_settings()
 
 
 @dataclass
@@ -36,21 +28,20 @@ class ETLLogContext:
             Convert the context to a dictionary for logger binding.
     """
     source_db_name: str
-    etl_run_guid: str
     etl_phase: str
     etl_step: str
+    etl_run_guid: str = settings.log.run_guid
 
     def __init__(self, source_db_name: Optional[str] = None,
-                 etl_run_guid: Optional[str] = None, etl_step: Optional[EtlStepType] = None):
+                 etl_step: Optional[EtlStepDefinition] = None):
         self.source_db_name = source_db_name if source_db_name is not None else "-"
-        self.etl_run_guid = etl_run_guid if etl_run_guid is not None else "-"
-        self.etl_step = step_to_str(etl_step) if etl_step is not None else "-"
-        self.etl_phase = get_phase_from_step(
-            etl_step) if etl_step is not None else "-"
+        self.etl_step = etl_step.code if etl_step is not None else "-"
+        self.etl_phase = get_phase_of_step(
+            etl_step).name if etl_step is not None else "-"
 
-    def update_step(self, etl_step: EtlStepType) -> None:
-        self.etl_step = step_to_str(etl_step)
-        self.etl_phase = get_phase_from_step(etl_step)
+    def update_step(self, etl_step: EtlStepDefinition) -> None:
+        self.etl_step = etl_step.code
+        self.etl_phase = get_phase_of_step(etl_step).name
 
     def update_source_db_name(self, source_db_name: str) -> None:
         self.source_db_name = source_db_name
