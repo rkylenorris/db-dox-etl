@@ -1,7 +1,7 @@
-﻿{
-    "app_name":  "db-dox-phase-1-etl",
-    "console_log_level":  "INFO",
-    "file_log_level":  "DEBUG",
-    "log_directory":  "/logs",
-    "json_log":  true
+{
+    "app_name": "db-dox-phase-1-etl",
+    "console_log_level": "INFO",
+    "file_log_level": "DEBUG",
+    "log_directory": "/logs",
+    "json_log": true
 }

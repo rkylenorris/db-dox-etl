@@ -50,6 +50,13 @@ def get_constants(path: Path) -> ETLLogConstants:
     Returns:
         ETLLogConstants: The loaded ETL logging constants.
     """
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         data = json.load(f)
     return ETLLogConstants(**data)
+
+
+if __name__ == "__main__":
+    # example usage
+    constants_path = Path("etl_logging\\etl_log_constants.json")
+    etl_logging_constants = get_constants(constants_path)
+    print(etl_logging_constants)

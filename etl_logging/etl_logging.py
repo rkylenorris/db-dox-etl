@@ -91,13 +91,17 @@ logger = _base_logger.patch(_add_default_extra)
 
 
 def configure_logging(
-    logging_constants: ETLLogConstants = CONSTANTS
-) -> None:
+    logging_constants: ETLLogConstants = CONSTANTS,
+    logger: loguru.Logger = logger,
+) -> loguru.Logger:
     """
     Configure Loguru logging for db-dox-phase-1-etl.
 
     Parameters:
         logging_constants (ETLLogConstants): Configuration constants for logging.
+        logger (loguru.Logger): The Loguru logger instance to configure.
+    Returns:
+        loguru.Logger: The configured Loguru logger instance.
     """
     # Ensure log directory exists
     logging_constants.log_directory.mkdir(parents=True, exist_ok=True)
@@ -151,10 +155,11 @@ def configure_logging(
     # Route stdlib logging (for libraries) into Loguru
     intercept_stdlib_logging()
 
-    # Bind app_name globally (available in JSON extra)
-    global logger  # type: ignore
-    logger = logger.bind(app_name=logging_constants.app_name)
-    logger = logger.bind(etl_run_guid=logging_constants.run_guid)
+    # Bind app_name globally (available in JSON extra) and return logger object
+    return logger.bind(
+        app_name=logging_constants.app_name,
+        etl_run_guid=logging_constants.run_guid
+    )
 
 
 # --- Helpers for ETL context --------------------------------------------------
