@@ -1,14 +1,13 @@
 from db_target import get_db_session
+from definitions import PHASES, STEPS, PHASE_BY_ID, EtlPhaseDefinition, EtlStepDefinition
 
 from db_target.models.meta.meta import ETLPhase, ETLStep as ETLStepModel
-
-from etl_logging.etl_step import EtlStep, step_to_str, get_phase_from_step, normalize_step_name
 
 
 SESSION = get_db_session()
 
 
-def add_phase(phase_name: str, description: str | None = None) -> ETLPhase:
+def add_phase(phase_def: EtlPhaseDefinition) -> ETLPhase:
     """
     Add an ETL phase if it does not already exist.
     Args:
@@ -17,15 +16,16 @@ def add_phase(phase_name: str, description: str | None = None) -> ETLPhase:
     Returns:
         ETLPhase: The existing or newly created ETLPhase object."""
     phase = SESSION.query(ETLPhase).filter(
-        ETLPhase.name == phase_name).one_or_none()
+        ETLPhase.name == phase_def.name).one_or_none()
     if phase is None:
-        phase = ETLPhase(name=phase_name, description=description)
+        phase = ETLPhase(id=phase_def.id, name=phase_def.name,
+                         description=phase_def.description)
         SESSION.add(phase)
         SESSION.commit()
     return phase
 
 
-def add_step(step_name: str, step_code: str, phase: ETLPhase, description: str | None = None) -> ETLStepModel:
+def add_step(step_def: EtlStepDefinition, phase: ETLPhase) -> ETLStepModel:
     """
     Add an ETL step if it does not already exist.
     Args:
@@ -36,11 +36,11 @@ def add_step(step_name: str, step_code: str, phase: ETLPhase, description: str |
     Returns:
         ETLStepModel: The existing or newly created ETLStep object."""
     step = SESSION.query(ETLStepModel).filter(
-        ETLStepModel.name == step_name).one_or_none()
+        ETLStepModel.name == step_def.name).one_or_none()
     if step is None:
-        step = ETLStepModel(phase_id=phase.id, name=step_name,
-                            code=step_code, phase=phase,
-                            description=description)
+        step = ETLStepModel(phase_id=phase.id, name=step_def.name,
+                            code=step_def.code, phase=phase,
+                            description=step_def.description)
         SESSION.add(step)
         SESSION.commit()
     return step
@@ -52,16 +52,14 @@ def seed_etl_phases_and_steps() -> None:
     This function checks for existing phases and steps to avoid duplicates.
     """
 
-    current_phase = None
+    current_phase: EtlPhaseDefinition | None = None
 
-    for step in EtlStep:
-        step_name = normalize_step_name(step.name)
-        step_code = step_to_str(step)
-        phase_name = get_phase_from_step(step)
+    for step_def in STEPS:
+        phase_def = PHASE_BY_ID[step_def.phase_id]
+        if current_phase is None or current_phase != phase_def:
+            current_phase = phase_def
+            phase = add_phase(phase_def)
 
-        if current_phase is None or current_phase.name != phase_name:
-            current_phase = add_phase(phase_name)
-
-        add_step(step_name, step_code, current_phase)
+        add_step(step_def, phase)
 
     SESSION.close()
