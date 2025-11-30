@@ -3,7 +3,7 @@ from functools import lru_cache
 from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .utils import LogLevel, Environment, SqlType, CONNECTION_TEMPLATES, generate_run_guid
+from .utils import LogLevel, Environment, SqlType, CONNECTION_TEMPLATES, generate_run_guid, SqlGlotDialectRegistry
 
 
 class DBCredentials(BaseModel):
@@ -125,6 +125,7 @@ class AppSettings(BaseSettings):
     log: LogSettings = LogSettings()
     feature_flags: FeatureFlags = FeatureFlags()
     environment: Environment = Environment.DEVELOPMENT
+    sql_glot_dialects: SqlGlotDialectRegistry = SqlGlotDialectRegistry()
 
     model_config = SettingsConfigDict(
         env_file=".env",
