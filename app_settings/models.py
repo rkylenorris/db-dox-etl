@@ -154,6 +154,18 @@ class AppSettings(BaseSettings):
 
         return self
 
+    def get_source_db_by_name(self, name: str) -> DbSettings | None:
+        """Get source database settings by database name.
+        Args:
+            name (str): Database name to search for.
+        Returns:
+            DbSettings | None: Matching DbSettings instance or None if not found.
+        """
+        for db_settings in self.source_dbs:
+            if db_settings.database == name:
+                return db_settings
+        return None
+
 
 @lru_cache
 def get_app_settings() -> AppSettings:
