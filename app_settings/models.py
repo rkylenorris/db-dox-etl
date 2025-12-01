@@ -89,17 +89,20 @@ class LogSettings(BaseModel):
         log_directory (Path): Directory to store log files.
         json_log (bool): Whether to log in JSON format.
     """
-    # run_guid: str = generate_run_guid()
     console_log_level: LogLevel = LogLevel.INFO
     file_log_level: LogLevel = LogLevel.DEBUG
     log_directory: Path = Path("./logs")
     json_log: bool = True
-    run_guid: str = PrivateAttr(default_factory=generate_run_guid)
+    _run_guid: str = PrivateAttr(default_factory=generate_run_guid)
 
     def __init__(self, **data):
         super().__init__(**data)
         # create log directory if it doesn't exist
         self.log_directory.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def run_guid(self) -> str:
+        return self._run_guid
 
 
 class FeatureFlags(BaseModel):
@@ -126,7 +129,7 @@ class AppSettings(BaseSettings):
     log: LogSettings = LogSettings()
     feature_flags: FeatureFlags = FeatureFlags()
     environment: Environment = Environment.DEVELOPMENT
-    sql_glot_dialect_registry: SqlGlotDialectRegistry = PrivateAttr(
+    _sql_glot_dialect_registry: SqlGlotDialectRegistry = PrivateAttr(
         default_factory=SqlGlotDialectRegistry
     )
 
@@ -169,6 +172,10 @@ class AppSettings(BaseSettings):
             if db_settings.database == name:
                 return db_settings
         return None
+
+    @property
+    def sql_glot_dialect_registry(self) -> SqlGlotDialectRegistry:
+        return self._sql_glot_dialect_registry
 
 
 @lru_cache
