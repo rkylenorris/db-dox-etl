@@ -1,6 +1,6 @@
 from pathlib import Path
 from functools import lru_cache
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, PrivateAttr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .utils import LogLevel, Environment, SqlType, CONNECTION_TEMPLATES, generate_run_guid, SqlGlotDialectRegistry
@@ -89,11 +89,12 @@ class LogSettings(BaseModel):
         log_directory (Path): Directory to store log files.
         json_log (bool): Whether to log in JSON format.
     """
-    run_guid: str = generate_run_guid()
+    # run_guid: str = generate_run_guid()
     console_log_level: LogLevel = LogLevel.INFO
     file_log_level: LogLevel = LogLevel.DEBUG
     log_directory: Path = Path("./logs")
     json_log: bool = True
+    run_guid: str = PrivateAttr(default_factory=generate_run_guid)
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -125,7 +126,9 @@ class AppSettings(BaseSettings):
     log: LogSettings = LogSettings()
     feature_flags: FeatureFlags = FeatureFlags()
     environment: Environment = Environment.DEVELOPMENT
-    sql_glot_dialects: SqlGlotDialectRegistry = SqlGlotDialectRegistry()
+    sql_glot_dialect_registry: SqlGlotDialectRegistry = PrivateAttr(
+        default_factory=SqlGlotDialectRegistry
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

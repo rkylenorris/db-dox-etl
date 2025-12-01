@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from uuid import uuid4
 from functools import lru_cache
@@ -60,42 +60,43 @@ CONNECTION_TEMPLATES = {
 
 @dataclass(frozen=True)
 class SqlGlotDialectRegistry:
-    mapping: dict[SqlType, sqlglot.Dialect]
+    mapping: dict[SqlType, type[sqlglot.Dialect]] = field(
+        default_factory=dict, init=False
+    )
 
-    def __init__(self):
+    def __post_init__(self) -> None:
+        m: dict[SqlType, type[sqlglot.Dialect]] = {}
+
         for sql_type in SqlType:
-            dialect = self._derive_dialect_from_sql_type(sql_type)
-            if dialect is None:
+            dialect_class = self._derive_dialect_from_sql_type(sql_type)
+            if dialect_class is None:
                 raise ValueError(
-                    f"Corresponding sqlglot dialect not found for sql type {sql_type!r}"
+                    f"Corresponding sqlglot dialect class not found for sql type {sql_type!r}"
                 )
-            self.mapping[sql_type] = dialect
+            m[sql_type] = dialect_class
 
-    def _derive_dialect_from_sql_type(self, sql_type: SqlType) -> sqlglot.Dialect | None:
+    def _derive_dialect_from_sql_type(self, sql_type: SqlType) -> type[sqlglot.Dialect] | None:
         type_name = sql_type.value
 
-        if type_name == 'mssql':
-            d = sqlglot.Dialect.get('tsql')
-            if d:
-                return d()
-        elif "+" in type_name:
-            d = sqlglot.Dialect.get(type_name.split('+')[0])
-            if d:
-                return d()
-        elif "postgres" in type_name:
-            d = sqlglot.Dialect.get('postgres')
-            if d:
-                return d()
-        else:
-            d = sqlglot.Dialect.get(type_name)
-            if d:
-                return d()
+        dialect_class: type[sqlglot.Dialect] | None = None
 
-        return None
+        if type_name == 'mssql':
+            dialect_class = sqlglot.Dialect.get('tsql')
+
+        elif "+" in type_name:
+            dialect_class = sqlglot.Dialect.get(type_name.split('+')[0])
+
+        elif "postgres" in type_name:
+            dialect_class = sqlglot.Dialect.get('postgres')
+
+        else:
+            dialect_class = sqlglot.Dialect.get(type_name)
+
+        return dialect_class
 
     def get(self, sql_type: SqlType) -> sqlglot.Dialect:
         """Return the sqlglot dialect object for the given SQL type."""
         try:
-            return self.mapping[sql_type]
+            return self.mapping[sql_type]()
         except KeyError:
             raise ValueError(f"No sqlglot dialect registered for {sql_type!r}")
