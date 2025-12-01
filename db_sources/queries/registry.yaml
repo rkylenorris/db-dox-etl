@@ -1,0 +1,136 @@
+core:
+  database_info:
+    path: "core/database_info.sql"
+    name: "core.database_info"
+    description: "Returns database-level metadata such as name, create/modify dates, collation, and compatibility information."
+    order: 1
+
+  schema_info:
+    path: "core/schema_info.sql"
+    name: "core.schema_info"
+    description: "Returns schema metadata including schema names, IDs, and owners."
+    order: 2
+
+  object_info:
+    path: "core/object_info.sql"
+    name: "core.object_info"
+    description: "Returns object-level metadata for all objects including tables, views, procedures, and functions."
+    order: 3
+
+relational:
+  tables:
+    table_info:
+      path: "relational/tables/table_info.sql"
+      name: "relational.tables.table_info"
+      description: "Metadata for tables including name, schema, object_id, creation and modification dates."
+      order: 4
+
+    table_columns:
+      path: "relational/tables/table_columns.sql"
+      name: "relational.tables.table_columns"
+      description: "Metadata for columns including names, datatypes, nullability, ordinality, and default values."
+      order: 5
+
+  constraints:
+    constraint_info:
+      path: "relational/constraints/constraint_info.sql"
+      name: "relational.constraints.constraint_info"
+      description: "Metadata for constraints including primary keys, unique constraints, and check constraints."
+      order: 6
+
+    constraint_columns:
+      path: "relational/constraints/constraint_columns.sql"
+      name: "relational.constraints.constraint_columns"
+      description: "Columns associated with each constraint including ordering and key position."
+      order: 7
+
+  foreign_keys:
+    fk_info:
+      path: "relational/foreign_keys/fk_info.sql"
+      name: "relational.foreign_keys.fk_info"
+      description: "Metadata for foreign key relationships including parent/child tables and delete/update rules."
+      order: 8
+
+    fk_columns:
+      path: "relational/foreign_keys/fk_columns.sql"
+      name: "relational.foreign_keys.fk_columns"
+      description: "Column-level details for foreign keys including referenced primary key columns."
+      order: 9
+
+  indexes:
+    index_info:
+      path: "relational/indexes/index_info.sql"
+      name: "relational.indexes.index_info"
+      description: "Metadata for indexes including clustered/nonclustered type, uniqueness, and filter definitions."
+      order: 10
+
+    index_columns:
+      path: "relational/indexes/index_columns.sql"
+      name: "relational.indexes.index_columns"
+      description: "Column-level index information including key ordinal and sort order."
+      order: 11
+
+    index_included_columns:
+      path: "relational/indexes/index_included_columns.sql"
+      name: "relational.indexes.index_included_columns"
+      description: "Included (non-key) columns for indexes."
+      order: 12
+
+code:
+  views:
+    view_info:
+      path: "code/views/view_info.sql"
+      name: "code.views.view_info"
+      description: "View metadata including schema, name, object_id, and definition source."
+      order: 13
+
+    view_columns:
+      path: "code/views/view_columns.sql"
+      name: "code.views.view_columns"
+      description: "Result column metadata for views after projection/expansion."
+      order: 14
+
+  procedures:
+    proc_info:
+      path: "code/procedures/proc_info.sql"
+      name: "code.procedures.proc_info"
+      description: "Stored procedure metadata including schema, name, object_id, and definition."
+      order: 15
+
+    proc_parameters:
+      path: "code/procedures/proc_parameters.sql"
+      name: "code.procedures.proc_parameters"
+      description: "Parameters for procedures including datatype, ordering, and default values."
+      order: 16
+
+    proc_result_columns:
+      path: "code/procedures/proc_result_columns.sql"
+      name: "code.procedures.proc_result_columns"
+      description: "Result-set column metadata derived from inspecting procedure SELECT output."
+      order: 17
+
+  functions:
+    func_info:
+      path: "code/functions/func_info.sql"
+      name: "code.functions.func_info"
+      description: "User-defined function metadata including type (scalar/table), schema, and definition."
+      order: 18
+
+    func_parameters:
+      path: "code/functions/func_parameters.sql"
+      name: "code.functions.func_parameters"
+      description: "Parameters for scalar or table-valued functions."
+      order: 19
+
+    func_result_columns:
+      path: "code/functions/func_result_columns.sql"
+      name: "code.functions.func_result_columns"
+      description: "Result columns for table-valued functions."
+      order: 20
+
+documentation:
+  extended_properties:
+    path: "documentation/extended_properties.sql"
+    name: "documentation.extended_properties"
+    description: "MS_Description extended property metadata for documenting schemas, tables, columns, and other objects."
+    order: 21
