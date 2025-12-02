@@ -3,9 +3,10 @@ import yaml
 from pathlib import Path
 from typing import Any, Iterator
 from dataclasses import dataclass
-from functools import cached_property
 
 from collections.abc import Sequence
+
+from definitions import PIPELINES
 
 
 QUERIES_PATH = Path('db_sources/queries')
@@ -39,16 +40,25 @@ class Query:
             raise FileNotFoundError(
                 f"Query {self.name}'s path ({self.full_path}) does not exist.")
 
-    @cached_property
+    @property
     def full_path(self) -> Path:
         return QUERIES_PATH / self.path
 
+    @property
+    def sql_text(self) -> str:
+        return self.full_path.read_text()
 
-def _import_queries_from_registry(registry_path: Path = QUERIES_PATH / "registry.yaml") -> list[Query]:
+
+def _import_queries_from_registry(registry_path: Path = QUERIES_PATH / "registry.yaml") -> dict[str, list[Query]]:
+
+    queries_by_pipeline = {}
 
     registry = yaml.safe_load(registry_path.read_text())
 
-    return _flatten_registry(registry)
+    for r in [registry[p] for p in PIPELINES]:
+        queries_by_pipeline[r.keys()[0]] = _flatten_registry(r)
+
+    return queries_by_pipeline
 
 
 def _flatten_registry(registry: dict[str, Any]) -> list[Query]:
@@ -66,7 +76,7 @@ def _flatten_registry(registry: dict[str, Any]) -> list[Query]:
 
 class Queries(Sequence[Query]):
 
-    def __init__(self, query_list: list[Query] = _import_queries_from_registry()) -> None:
+    def __init__(self, query_list: list[Query]) -> None:
         self._items = sorted(query_list, key=lambda q: q.order)
 
     def __getitem__(self, index: int) -> Query:
@@ -77,3 +87,10 @@ class Queries(Sequence[Query]):
 
     def __iter__(self) -> Iterator[Query]:
         return iter(self._items)
+
+
+query_groups = _import_queries_from_registry()
+
+dim_objects_queries = Queries(query_groups['dim_objects'])
+dim_columns_queries = Queries(query_groups['dim_columns'])
+fact_relationships_queries = Queries(query_groups['fact_relationships'])
