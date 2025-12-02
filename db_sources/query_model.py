@@ -55,8 +55,8 @@ def _import_queries_from_registry(registry_path: Path = QUERIES_PATH / "registry
 
     registry = yaml.safe_load(registry_path.read_text())
 
-    for r in [registry[p] for p in PIPELINES]:
-        queries_by_pipeline[r.keys()[0]] = _flatten_registry(r)
+    for k, r in [[p, registry[p]] for p in PIPELINES]:
+        queries_by_pipeline[k] = _flatten_registry(r)
 
     return queries_by_pipeline
 
