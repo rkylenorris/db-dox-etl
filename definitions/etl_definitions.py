@@ -45,6 +45,13 @@ PHASE_BY_ID: Final[dict[int, EtlPhaseDefinition]] = {p.id: p for p in PHASES}
 STEP_BY_KEY: Final[dict[str, EtlStepDefinition]] = {s.key: s for s in STEPS}
 STEP_BY_ID: Final[dict[int, EtlStepDefinition]] = {s.id: s for s in STEPS}
 
+PIPELINES: Final[list[str]] = [
+    p.code for p in sorted(
+        [s for s in STEPS if s.phase_id == PHASE_BY_KEY['PIPELINE'].id],
+        key=lambda st: st.id
+    )
+]
+
 
 def iter_steps_in_phase(phase_key: str) -> Iterable[EtlStepDefinition]:
     """Yield all ETL steps belonging to the specified phase key."""
