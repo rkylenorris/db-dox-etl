@@ -396,7 +396,7 @@ Ref: doc.extended_property.column_id   > relational.column_info.column_id
 
 Enum etl_phase_type {
   application
-  streaming pipelines
+  pipeline
   audit
 }
 
@@ -446,7 +446,7 @@ Table meta.etl_step {
   Index UQ_etl_step_type [unique] {
     step_type
   }
-  
+
 }
 
 
