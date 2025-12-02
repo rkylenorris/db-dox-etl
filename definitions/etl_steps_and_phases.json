@@ -9,7 +9,7 @@
         {
             "id": 2,
             "key": "PIPELINE",
-            "name": "Streaming Pipelines",
+            "name": "Pipeline",
             "description": "Each step represents a full driver-query -> transform (pandas) -> load cycle for a target in the documentation database."
         },
         {
@@ -26,7 +26,8 @@
             "key": "APP_START",
             "name": "Application Pipeline Start",
             "code": "application.pipeline.start",
-            "description": "Marks the start of the db-dox ETL run."
+            "description": "Marks the start of the db-dox ETL run.",
+            "step_order": 1
         },
         {
             "id": 2,
@@ -34,7 +35,8 @@
             "key": "APP_END",
             "name": "Application Pipeline End",
             "code": "application.pipeline.end",
-            "description": "Marks the successful completion (or final shutdown) of the db-dox ETL run."
+            "description": "Marks the successful completion (or final shutdown) of the db-dox ETL run.",
+            "step_order": 2
         },
         {
             "id": 3,
@@ -42,7 +44,8 @@
             "key": "PIPELINE_DIM_OBJECTS",
             "name": "Dim Objects Pipeline",
             "code": "pipeline.docdb.dim_objects",
-            "description": "Driver queries source metadata for database objects (tables, views, procedures, functions, etc.), streams results into pandas for transformation, and loads them into docdb.dim_objects before the next pipeline step executes."
+            "description": "Driver queries source metadata for database objects (tables, views, procedures, functions, etc.), streams results into pandas for transformation, and loads them into docdb.dim_objects before the next pipeline step executes.",
+            "step_order": 1
         },
         {
             "id": 4,
@@ -50,7 +53,8 @@
             "key": "PIPELINE_DIM_COLUMNS",
             "name": "Dim Columns Pipeline",
             "code": "pipeline.docdb.dim_columns",
-            "description": "Driver queries source metadata for columns (including data types, nullability, and index usage), streams results into pandas for transformation, and loads them into docdb.dim_columns before the next pipeline step executes."
+            "description": "Driver queries source metadata for columns (including data types, nullability, and index usage), streams results into pandas for transformation, and loads them into docdb.dim_columns before the next pipeline step executes.",
+            "step_order": 2
         },
         {
             "id": 5,
@@ -58,15 +62,17 @@
             "key": "PIPELINE_FACT_RELATIONSHIPS",
             "name": "Fact Relationships Pipeline",
             "code": "pipeline.docdb.fact_relationships",
-            "description": "Driver queries foreign key metadata and parses SQL definitions (views, procedures, functions) to derive additional relationships. All relationship data is streamed through pandas transformations and loaded into docdb.fact_relationships before moving on."
+            "description": "Driver queries foreign key metadata and parses SQL definitions (views, procedures, functions) to derive additional relationships. All relationship data is streamed through pandas transformations and loaded into docdb.fact_relationships before moving on.",
+            "step_order": 3
         },
         {
             "id": 6,
             "phase_id": 3,
-            "key": "PIPELINE_AUDIT",
+            "key": "LOAD_AUDIT",
             "name": "Audit Pipeline",
-            "code": "pipeline.docdb.audit",
-            "description": "Collects and persists run-level metrics, timing, and status information, streaming them into docdb.audit as a final step in the ETL run."
+            "code": "audit.docdb.load",
+            "description": "Collects and persists run-level metrics, timing, and status information, streaming them into docdb.audit as a final step in the ETL run.",
+            "step_order": 1
         }
     ]
 }

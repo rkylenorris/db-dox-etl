@@ -24,6 +24,7 @@ class EtlStepDefinition:
     key: str
     name: str
     code: str
+    step_order: int
     description: str | None = None
 
 
@@ -46,9 +47,9 @@ STEP_BY_KEY: Final[dict[str, EtlStepDefinition]] = {s.key: s for s in STEPS}
 STEP_BY_ID: Final[dict[int, EtlStepDefinition]] = {s.id: s for s in STEPS}
 
 PIPELINES: Final[list[str]] = [
-    p.code for p in sorted(
+    p.code.split('.')[-1] for p in sorted(
         [s for s in STEPS if s.phase_id == PHASE_BY_KEY['PIPELINE'].id],
-        key=lambda st: st.id
+        key=lambda st: st.step_order
     )
 ]
 
