@@ -1,7 +1,7 @@
 import yaml
 
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Iterable, Tuple
 from dataclasses import dataclass
 
 from collections.abc import Sequence
@@ -76,8 +76,10 @@ def _flatten_registry(registry: dict[str, Any]) -> list[Query]:
 
 class Queries(Sequence[Query]):
 
-    def __init__(self, query_list: list[Query]) -> None:
-        self._items = sorted(query_list, key=lambda q: q.order)
+    def __init__(self, query_list: Iterable[Query]) -> None:
+        self._items: Tuple[Query, ...] = tuple(
+            sorted(query_list, key=lambda q: q.order)
+        )
 
     def __getitem__(self, index: int) -> Query:
         return self._items[index]
@@ -89,8 +91,9 @@ class Queries(Sequence[Query]):
         return iter(self._items)
 
 
-query_groups = _import_queries_from_registry()
+_queries_by_pipeline = _import_queries_from_registry()
 
-dim_objects_queries = Queries(query_groups['dim_objects'])
-dim_columns_queries = Queries(query_groups['dim_columns'])
-fact_relationships_queries = Queries(query_groups['fact_relationships'])
+DIM_OBJECTS: Queries = Queries(_queries_by_pipeline['dim_objects'])
+DIM_COLUMNS: Queries = Queries(_queries_by_pipeline['dim_columns'])
+FACT_RELATIONSHIPS: Queries = Queries(
+    _queries_by_pipeline['fact_relationships'])
