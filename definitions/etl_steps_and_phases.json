@@ -8,27 +8,15 @@
         },
         {
             "id": 2,
-            "key": "EXTRACT",
-            "name": "Extract",
-            "description": null
+            "key": "PIPELINE",
+            "name": "Streaming Pipelines",
+            "description": "Each step represents a full driver-query -> transform (pandas) -> load cycle for a target in the documentation database."
         },
         {
             "id": 3,
-            "key": "PARSE",
-            "name": "Parse",
-            "description": null
-        },
-        {
-            "id": 4,
-            "key": "TRANSFORM",
-            "name": "Transform",
-            "description": null
-        },
-        {
-            "id": 5,
-            "key": "LOAD",
-            "name": "Load",
-            "description": null
+            "key": "AUDIT",
+            "name": "Audit",
+            "description": "Capture and persist run-level audit information in a single streaming pipeline."
         }
     ],
     "steps": [
@@ -38,7 +26,7 @@
             "key": "APP_START",
             "name": "Application Pipeline Start",
             "code": "application.pipeline.start",
-            "description": null
+            "description": "Marks the start of the db-dox ETL run."
         },
         {
             "id": 2,
@@ -46,167 +34,39 @@
             "key": "APP_END",
             "name": "Application Pipeline End",
             "code": "application.pipeline.end",
-            "description": null
+            "description": "Marks the successful completion (or final shutdown) of the db-dox ETL run."
         },
         {
             "id": 3,
             "phase_id": 2,
-            "key": "EXTRACT_SYS_SCHEMAS",
-            "name": "Extract Sys Schemas",
-            "code": "extract.sys.schemas",
-            "description": null
+            "key": "PIPELINE_DIM_OBJECTS",
+            "name": "Dim Objects Pipeline",
+            "code": "pipeline.docdb.dim_objects",
+            "description": "Driver queries source metadata for database objects (tables, views, procedures, functions, etc.), streams results into pandas for transformation, and loads them into docdb.dim_objects before the next pipeline step executes."
         },
         {
             "id": 4,
             "phase_id": 2,
-            "key": "EXTRACT_SYS_TABLES",
-            "name": "Extract Sys Tables",
-            "code": "extract.sys.tables",
-            "description": null
+            "key": "PIPELINE_DIM_COLUMNS",
+            "name": "Dim Columns Pipeline",
+            "code": "pipeline.docdb.dim_columns",
+            "description": "Driver queries source metadata for columns (including data types, nullability, and index usage), streams results into pandas for transformation, and loads them into docdb.dim_columns before the next pipeline step executes."
         },
         {
             "id": 5,
             "phase_id": 2,
-            "key": "EXTRACT_SYS_COLUMNS",
-            "name": "Extract Sys Columns",
-            "code": "extract.sys.columns",
-            "description": null
+            "key": "PIPELINE_FACT_RELATIONSHIPS",
+            "name": "Fact Relationships Pipeline",
+            "code": "pipeline.docdb.fact_relationships",
+            "description": "Driver queries foreign key metadata and parses SQL definitions (views, procedures, functions) to derive additional relationships. All relationship data is streamed through pandas transformations and loaded into docdb.fact_relationships before moving on."
         },
         {
             "id": 6,
-            "phase_id": 2,
-            "key": "EXTRACT_SYS_FKS",
-            "name": "Extract Sys Foreign Keys",
-            "code": "extract.sys.foreign_keys",
-            "description": null
-        },
-        {
-            "id": 7,
-            "phase_id": 2,
-            "key": "EXTRACT_SYS_INDEXES",
-            "name": "Extract Sys Indexes",
-            "code": "extract.sys.indexes",
-            "description": null
-        },
-        {
-            "id": 8,
-            "phase_id": 2,
-            "key": "EXTRACT_SYS_VIEWS",
-            "name": "Extract Sys Views",
-            "code": "extract.sys.views",
-            "description": null
-        },
-        {
-            "id": 9,
-            "phase_id": 2,
-            "key": "EXTRACT_SYS_PROCS",
-            "name": "Extract Sys Procedures",
-            "code": "extract.sys.procedures",
-            "description": null
-        },
-        {
-            "id": 10,
-            "phase_id": 2,
-            "key": "EXTRACT_SYS_FUNCS",
-            "name": "Extract Sys Functions",
-            "code": "extract.sys.functions",
-            "description": null
-        },
-        {
-            "id": 11,
             "phase_id": 3,
-            "key": "PARSE_VIEW_DEFS",
-            "name": "Parse View Definitions",
-            "code": "parse.view.definitions",
-            "description": null
-        },
-        {
-            "id": 12,
-            "phase_id": 3,
-            "key": "PARSE_PROC_DEFS",
-            "name": "Parse Proc Definitions",
-            "code": "parse.proc.definitions",
-            "description": null
-        },
-        {
-            "id": 13,
-            "phase_id": 3,
-            "key": "PARSE_FUNC_DEFS",
-            "name": "Parse Func Definitions",
-            "code": "parse.func.definitions",
-            "description": null
-        },
-        {
-            "id": 14,
-            "phase_id": 3,
-            "key": "PARSE_RELATIONSHIPS",
-            "name": "Parse Relationships",
-            "code": "parse.relationships",
-            "description": null
-        },
-        {
-            "id": 15,
-            "phase_id": 4,
-            "key": "TRANSFORM_DIM_OBJECTS",
-            "name": "Transform Dim Objects",
-            "code": "transform.dim_objects",
-            "description": null
-        },
-        {
-            "id": 16,
-            "phase_id": 4,
-            "key": "TRANSFORM_DIM_COLUMNS",
-            "name": "Transform Dim Columns",
-            "code": "transform.dim_columns",
-            "description": null
-        },
-        {
-            "id": 17,
-            "phase_id": 4,
-            "key": "TRANSFORM_FACT_RELATIONSHIPS",
-            "name": "Transform Fact Relationships",
-            "code": "transform.fact_relationships",
-            "description": null
-        },
-        {
-            "id": 18,
-            "phase_id": 4,
-            "key": "TRANSFORM_AUDIT",
-            "name": "Transform Audit",
-            "code": "transform.audit",
-            "description": null
-        },
-        {
-            "id": 19,
-            "phase_id": 5,
-            "key": "LOAD_DIM_OBJECTS",
-            "name": "Load Docdb Dim Objects",
-            "code": "load.docdb.dim_objects",
-            "description": null
-        },
-        {
-            "id": 20,
-            "phase_id": 5,
-            "key": "LOAD_DIM_COLUMNS",
-            "name": "Load Docdb Dim Columns",
-            "code": "load.docdb.dim_columns",
-            "description": null
-        },
-        {
-            "id": 21,
-            "phase_id": 5,
-            "key": "LOAD_FACT_RELATIONS",
-            "name": "Load Docdb Fact Relationships",
-            "code": "load.docdb.fact_relationships",
-            "description": null
-        },
-        {
-            "id": 22,
-            "phase_id": 5,
-            "key": "LOAD_AUDIT",
-            "name": "Load Docdb Audit",
-            "code": "load.docdb.audit",
-            "description": null
+            "key": "PIPELINE_AUDIT",
+            "name": "Audit Pipeline",
+            "code": "pipeline.docdb.audit",
+            "description": "Collects and persists run-level metrics, timing, and status information, streaming them into docdb.audit as a final step in the ETL run."
         }
     ]
 }
